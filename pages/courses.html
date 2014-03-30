@@ -1,0 +1,79 @@
+    <style>
+      .but-not-though {
+        font-size: 177%;
+      }
+    </style>
+    <script>
+      $(document).ready(function() {
+        $.ajax({
+          type: "GET",
+          url: "/data/courses.json",
+          datatype: "json",
+        }).done(function(rawdata) {
+          window.data = rawdata.masterList;
+          render("EVERYTHING");
+        });
+        $("#department-selector").on("change", function (e) {
+          render(this.value);
+        });
+      });
+      function render(department) {
+        var data = window.data;
+        $("#courses").html('');
+        data.forEach(function(item) {
+          if (department !== "EVERYTHING" && department !== item.department) {
+            return // continue
+          }
+          if (item.isOpen) {
+            color = 'success';
+            state = item.seats + ' seats';
+          } else {
+            color = 'danger';
+            state = 'closed';
+          }
+          var lineitem = "";
+          lineitem += '<div class="panel panel-' + color + '">';
+            lineitem += '<div class="panel-heading">';
+              lineitem += '<h4 class="panel-title">';
+                lineitem += '<a class="navbar-brand but-not-though">' + item.department + '&nbsp;&nbsp;&nbsp;</a> ';
+                lineitem += item.title + ' ';
+              lineitem += '</h4>';
+              lineitem += '<span class="label label-' + color + '">' + state + '</span> ';
+            if (item.gers !== "") {
+              var gers = item.gers.substring(1, item.gers.length - 1); //strip curly braces
+              var gerArray = gers.split(", ");
+              gerArray.forEach(function(ger) {
+                ger = ger.substring(1, ger.length - 1); //strip quotes
+                lineitem += '<span class="label label-info">GER ' + ger + '</span> ';
+              });
+            }
+            lineitem += '</div>';
+            lineitem += '<div class="panel-body">'
+              lineitem += "We'd have a course description here if perchance we could scrape it."
+              lineitem += '<button type="submit" class="btn btn-default" style="float:right;">' + item.crn + '</button>';
+            lineitem += '</div>';
+          lineitem += '</div>';
+          $("#courses").append(lineitem);
+        });
+      };
+      departments = ['EPPL', 'THEA', 'ANTH', 'PBHL', 'GIS', 'LAW', 'BUAD', 'BIOL', 'AMST', 'ITAL', 'RELG', 'ARTH', 'SOCL', 'HBRW', 'MATH', 'NSCI', 'RUSN', 'SPCH', 'CHEM', 'FMST', 'GSWS', 'PHIL', 'GEOL', 'JAPN', 'INTR', 'ARAB', 'AFST', 'EURS', 'ENGL', 'CLCV', 'AMES', 'WRIT', 'ENSP', 'RPSS', 'INRL', 'LING', 'HISP', 'MLSC', 'CSCI', 'GREK', 'GRMN', 'ART', 'PUBP', 'APSC', 'GBST', 'DANC', 'GOVT', 'CMST', 'CRWR', 'FREN', 'PSYC', 'CHIN', 'CRIN', 'LAS', 'MDLL', 'ECON', 'EDUC', 'LATN', 'KINE', 'MSCI', 'MUSC', 'HIST', 'PHYS']
+    </script>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-9">
+          <h1>Courses <small>Fall 2014</small></h1>
+          <hr />
+          <div id="courses">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <h2>Filters</h2>
+          <hr />
+          <h4>Departments</h4>
+          <select class="selectpicker" id="department-selector">
+            <option value="EVERYTHING">All</option>
+            <option value="CSCI">CSCI</option>
+            <option value="THEA">THEA</option>
+          </select>
+        </div>
+      </div>
