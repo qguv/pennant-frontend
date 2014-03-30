@@ -5,6 +5,7 @@
     </style>
     <script>
       $(document).ready(function() {
+        window.departments=['EPPL','THEA','ANTH','PBHL','GIS','LAW','BUAD','BIOL','AMST','ITAL','RELG','ARTH','SOCL','HBRW','MATH','NSCI','RUSN','SPCH','CHEM','FMST','GSWS','PHIL','GEOL','JAPN','INTR','ARAB','AFST','EURS','ENGL','CLCV','AMES','WRIT','ENSP','RPSS','INRL','LING','HISP','MLSC','CSCI','GREK','GRMN','ART','PUBP','APSC','GBST','DANC','GOVT','CMST','CRWR','FREN','PSYC','CHIN','CRIN','LAS','MDLL','ECON','EDUC','LATN','KINE','MSCI','MUSC','HIST','PHYS']
         $.ajax({
           type: "GET",
           url: "/data/courses.json",
@@ -16,7 +17,18 @@
         $("#department-selector").on("change", function (e) {
           render(this.value);
         });
+        renderFilters();
+        window.myCourses = [];
+        window.myCrns = [];
       });
+      function renderFilters() {
+        var data = window.departments;
+        data.forEach(function(item) {
+          var lineitem = "";
+          lineitem += '<option value="' + item + '">' + item + '</option>';
+          $("#department-selector").append(lineitem);
+        });
+      };
       function render(department) {
         var data = window.data;
         $("#courses").html('');
@@ -50,13 +62,73 @@
             lineitem += '</div>';
             lineitem += '<div class="panel-body">'
               lineitem += "We'd have a course description here if perchance we could scrape it."
-              lineitem += '<button type="submit" class="btn btn-default" style="float:right;">' + item.crn + '</button>';
+              lineitem += '<button type="submit" class="btn btn-default" onClick="addToList(' + item.crn + ');" style="float:right;">' + item.crn + '</button>';
             lineitem += '</div>';
           lineitem += '</div>';
           $("#courses").append(lineitem);
         });
       };
-      departments = ['EPPL', 'THEA', 'ANTH', 'PBHL', 'GIS', 'LAW', 'BUAD', 'BIOL', 'AMST', 'ITAL', 'RELG', 'ARTH', 'SOCL', 'HBRW', 'MATH', 'NSCI', 'RUSN', 'SPCH', 'CHEM', 'FMST', 'GSWS', 'PHIL', 'GEOL', 'JAPN', 'INTR', 'ARAB', 'AFST', 'EURS', 'ENGL', 'CLCV', 'AMES', 'WRIT', 'ENSP', 'RPSS', 'INRL', 'LING', 'HISP', 'MLSC', 'CSCI', 'GREK', 'GRMN', 'ART', 'PUBP', 'APSC', 'GBST', 'DANC', 'GOVT', 'CMST', 'CRWR', 'FREN', 'PSYC', 'CHIN', 'CRIN', 'LAS', 'MDLL', 'ECON', 'EDUC', 'LATN', 'KINE', 'MSCI', 'MUSC', 'HIST', 'PHYS']
+      function addToList(targetcrn) {
+        window.myCourses.push.apply(window.myCourses, window.data.filter(function(a){return a.crn === targetcrn}));
+        window.myCrns.push(targetcrn);
+        renderMyCourses();
+      };
+      function removeFromList(targetcrn) {
+        var toDelete = window.myCourses.filter(function(a){return a.crn === targetcrn})[0];
+        var index = window.myCourses.indexOf(toDelete);
+        if (index > -1) {
+          window.myCourses.splice(index, 1);
+        }
+        var index = window.myCrns.indexOf(targetcrn);
+        if (index > -1) {
+          window.myCrns.splice(index, 1);
+        }
+        renderMyCourses();
+      };
+      function renderMyCourses() {
+        var data = window.myCourses;
+        $.cookie("courses", window.myCrns);
+        $("#mycourses").html('');
+        data.forEach(function(item) {
+          if (item.isOpen) {
+            color = 'success';
+            state = item.seats + ' seats';
+          } else {
+            color = 'danger';
+            state = 'closed';
+          }
+          var lineitem = "";
+          lineitem += '<div class="panel panel-' + color + '">';
+            lineitem += '<div class="panel-heading">';
+              lineitem += '<h4 class="panel-title">';
+                lineitem += '<a class="navbar-brand but-not-though">' + item.department + '&nbsp;&nbsp;&nbsp;</a> ';
+                lineitem += '<p>' + item.title + '</p>';
+              lineitem += '</h4>';
+              lineitem += '<div class="row">';
+                lineitem += '<div class="col-md-6">'
+                  lineitem += '<button type="submit" class="btn btn-warning" onClick="removeFromList(' + item.crn + ');" style="float:right;">Remove</button>';
+                lineitem += '</div>';
+                lineitem += '<div class="col-md-6">'
+                  lineitem += '<p>Prof.&nbsp;' + item.professor.split(', ')[0] + '</p>';
+                  lineitem += '<p>' + item.creditHours + ' credits</p>';
+                lineitem += '</div>';
+              lineitem += '</div>';
+              lineitem += '<hr />';
+                lineitem += '<span class="label label-' + color + '">' + state + '</span> ';
+            if (item.gers !== "") {
+              var gers = item.gers.substring(1, item.gers.length - 1); //strip curly braces
+              var gerArray = gers.split(", ");
+              gerArray.forEach(function(ger) {
+                ger = ger.substring(1, ger.length - 1); //strip quotes
+                lineitem += '<span class="label label-info">GER ' + ger + '</span> ';
+              });
+            }
+                lineitem += '<span class="label label-primary">CRN ' + item.crn + '</span> ';
+            lineitem += '</div>';
+          lineitem += '</div>';
+          $("#mycourses").append(lineitem);
+        });
+      };
     </script>
     <div class="container">
       <div class="row">
@@ -73,7 +145,13 @@
           <select class="selectpicker" id="department-selector">
             <option value="EVERYTHING">All</option>
             <option value="CSCI">CSCI</option>
-            <option value="THEA">THEA</option>
+            <option value="LING">LING</option>
           </select>
+          <br /><br /><br /><br /><br />
+
+          <h2>My Courses</h2>
+          <div id="mycourses">
+          </div>
+          <hr />
         </div>
       </div>
